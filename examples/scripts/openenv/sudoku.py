@@ -109,7 +109,7 @@ def parse_args() -> argparse.Namespace:
     # Environment
     parser.add_argument("--env-host", type=str, default="https://openenv-sudoku.hf.space")
     parser.add_argument("--env-port", type=int, default=8001)
-    parser.add_argument("--env-mode", choices=["docker-local", "docker-image", "docker-hub", "space"], default="space")
+    parser.add_argument("--env-mode", choices=["docker-local", "docker-image", "docker-hub", "space", "local"], default="space")
     parser.add_argument("--env-image", type=str, default="textarena-env:latest")
 
     # Prompts
@@ -707,7 +707,10 @@ def main() -> None:
     args = parse_args()
 
     # Setup environment
-    if args.env_mode == "docker-local":
+    if args.env_mode == "local":
+        from local_sudoku_env import LocalSudokuEnv
+        client = LocalSudokuEnv(num_clues=35)
+    elif args.env_mode == "docker-local":
         client = TextArenaEnv(base_url=f"http://{args.env_host}:{args.env_port}")
     elif args.env_mode == "docker-image":
         client = TextArenaEnv.from_docker_image(args.env_image)
@@ -733,6 +736,7 @@ def main() -> None:
         vllm_gpu_memory_utilization=args.vllm_gpu_memory_utilization
         if args.vllm_gpu_memory_utilization
         else 0.2,  # Lower to leave more VRAM for backpropagation
+        vllm_structured_outputs_regex=r"\[[1-9] [1-9] [1-9]\]",  # Force valid move format
         model_init_kwargs={"max_memory": {0: "10GiB", "cpu": "30GiB"}},  # Limit training model memory for vLLM
         output_dir=str(output_dir),
         num_train_epochs=args.num_epochs,
