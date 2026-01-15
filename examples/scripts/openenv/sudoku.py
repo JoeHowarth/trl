@@ -733,6 +733,7 @@ def main() -> None:
         vllm_gpu_memory_utilization=args.vllm_gpu_memory_utilization
         if args.vllm_gpu_memory_utilization
         else 0.2,  # Lower to leave more VRAM for backpropagation
+        model_init_kwargs={"max_memory": {0: "10GiB", "cpu": "30GiB"}},  # Limit training model memory for vLLM
         output_dir=str(output_dir),
         num_train_epochs=args.num_epochs,
         learning_rate=args.learning_rate,
@@ -749,7 +750,7 @@ def main() -> None:
         temperature=args.temperature,
         top_k=args.top_k,
         top_p=args.top_p,
-        report_to="trackio",
+        report_to="none",  # Disable cloud logging for local runs
         # chat_template_kwargs={"enable_thinking": False},
     )
 
